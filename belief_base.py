@@ -1,0 +1,156 @@
+import itertools
+
+
+class BeliefBase:
+    def __init__(self):
+        self.beliefs = []
+
+    def expand(self, belief):
+        self.beliefs.append(belief)
+        if not self.is_consistent():
+            print(f"Warning: By adding {belief} you've made the belief base inconsistent.")
+
+    def __str__(self):
+        status = "Consistent" if self.is_consistent() else "Inconsistent"
+        beliefs_str = " , ".join(str(belief) for belief in self.beliefs)
+        return f"Belief Base: {beliefs_str}\nStatus: {status}"
+
+    def __repr__(self):
+        return f"BeliefBase({self.beliefs})"
+    
+    def evaluate_all(self, model):
+        return all(belief.evaluate(model) for belief in self.beliefs)
+    
+    def evaluate_any(self, model):
+        return any(belief.evaluate(model) for belief in self.beliefs)
+    
+    def get_atoms(self):
+        atoms = set()
+        for belief in self.beliefs:
+            if isinstance(belief, Atom):
+                atoms.add(belief.name)
+            elif isinstance(belief, (And, Or, Not, Implies)):
+                atoms.update(belief.get_atoms())
+        return atoms
+    
+    def generate_all_models(self):
+        atoms = sorted(self.get_atoms())
+        truth_combinations = itertools.product([True, False], repeat=len(atoms))
+        
+        models = []
+        for combo in truth_combinations:
+            model = dict(zip(atoms, combo))
+            models.append(model)
+        
+        return models
+
+    def is_consistent(self):
+        for model in self.generate_all_models():
+            if self.evaluate_all(model):
+                return True  # At least one model satisfies all beliefs
+        return False  # No model satisfies all beliefs
+
+class Atom:
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return f"Atom('{self.name}')"
+    
+    def evaluate(self, model):
+        return model[self.name]
+
+class And:
+    def __init__(self, *args):
+        self.operands = args
+
+    def __str__(self):
+        return "(" + " ∧ ".join(str(op) for op in self.operands) + ")"
+
+    def __repr__(self):
+        return f"And({', '.join(repr(op) for op in self.operands)})"
+    
+    def evaluate(self, model):
+        return all(op.evaluate(model) for op in self.operands)
+    
+    def get_atoms(self):
+        atoms = set()
+        for operand in self.operands:
+            if isinstance(operand, Atom):
+                atoms.add(operand.name)
+            elif isinstance(operand, (And, Or, Not, Implies)):
+                atoms.update(operand.get_atoms())
+        return atoms
+
+class Or:
+    def __init__(self, *args):
+        self.operands = args
+
+    def __str__(self):
+        return "(" + " ∨ ".join(str(op) for op in self.operands) + ")"
+
+    def __repr__(self):
+        return f"Or({', '.join(repr(op) for op in self.operands)})"
+    
+    def evaluate(self, model):
+        return any(op.evaluate(model) for op in self.operands)
+    
+    def get_atoms(self):
+        atoms = set()
+        for operand in self.operands:
+            if isinstance(operand, Atom):
+                atoms.add(operand.name)
+            elif isinstance(operand, (And, Or, Not, Implies)):
+                atoms.update(operand.get_atoms())
+        return atoms
+
+class Not:
+    def __init__(self, operand):
+        self.operand = operand
+
+    def __str__(self):
+        return f"¬{self.operand}"
+
+    def __repr__(self):
+        return f"Not({repr(self.operand)})"
+    
+    def evaluate(self, model):
+        return not self.operand.evaluate(model)
+    
+    def get_atoms(self):
+        atoms = set()
+        if isinstance(self.operand, Atom):
+            atoms.add(self.operand.name)
+        elif isinstance(self.operand, (And, Or, Not, Implies)):
+            atoms.update(self.operand.get_atoms())
+        return atoms
+
+class Implies:
+    def __init__(self, antecedent, consequent):
+        self.antecedent = antecedent
+        self.consequent = consequent
+
+    def __str__(self):
+        return f"({self.antecedent} → {self.consequent})"
+
+    def __repr__(self):
+        return f"Implies({repr(self.antecedent)}, {repr(self.consequent)})"
+    
+    def evaluate(self, model):
+        return not self.antecedent.evaluate(model) or self.consequent.evaluate(model)
+    
+    def get_atoms(self):
+        atoms = set()
+        if isinstance(self.antecedent, Atom):
+            atoms.add(self.antecedent.name)
+        elif isinstance(self.antecedent, (And, Or, Not, Implies)):
+            atoms.update(self.antecedent.get_atoms())
+        if isinstance(self.consequent, Atom):
+            atoms.add(self.consequent.name)
+        elif isinstance(self.consequent, (And, Or, Not, Implies)):
+            atoms.update(self.consequent.get_atoms())
+        return atoms
+    
