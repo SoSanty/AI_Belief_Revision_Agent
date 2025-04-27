@@ -14,7 +14,7 @@ def powerset(s):
     """Returns all subsets of a set s."""
     return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
 
-# Check if a subset is a maximal non-entailing subset
+# Check if a subset is a maximal non-entailing the belief to contract
 def is_maximal_non_entailing(subset, full_base, formula, entails):
     subset = set(subset)
     if entails(subset, formula):
