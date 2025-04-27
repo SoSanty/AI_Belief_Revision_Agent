@@ -1,14 +1,30 @@
 import itertools
 
+class Belief:
+    def __init__(self, formula, priority=0):
+        self.formula = formula
+        self.priority = priority
+
+    def __str__(self):
+        return f"{self.formula} [p={self.priority}]"
+
+    def __repr__(self):
+        return f"Belief({repr(self.formula)}, priority={self.priority})"
+
+    def evaluate(self, model):
+        return self.formula.evaluate(model)
+
+    def get_atoms(self):
+        return self.formula.get_atoms()
 
 class BeliefBase:
     def __init__(self):
         self.beliefs = []
 
-    def expand(self, belief):
-        self.beliefs.append(belief)
+    def expand(self, formula, priority=0):
+        self.beliefs.append(Belief(formula, priority))
         if not self.is_consistent():
-            print(f"Warning: By adding {belief} you've made the belief base inconsistent.")
+            print(f"Warning: By adding {formula} you've made the belief base inconsistent.")
 
     def __str__(self):
         status = "Consistent" if self.is_consistent() else "Inconsistent"
@@ -27,10 +43,7 @@ class BeliefBase:
     def get_atoms(self):
         atoms = set()
         for belief in self.beliefs:
-            if isinstance(belief, Atom):
-                atoms.add(belief.name)
-            elif isinstance(belief, (And, Or, Not, Implies)):
-                atoms.update(belief.get_atoms())
+            atoms.update(belief.get_atoms())
         return atoms
     
     def generate_all_models(self):
@@ -153,4 +166,3 @@ class Implies:
         elif isinstance(self.consequent, (And, Or, Not, Implies)):
             atoms.update(self.consequent.get_atoms())
         return atoms
-    
