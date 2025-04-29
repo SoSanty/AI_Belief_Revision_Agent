@@ -75,6 +75,9 @@ class Atom:
     
     def evaluate(self, model):
         return model[self.name]
+    
+    def get_atoms(self):
+        return {self.name}
 
 class And:
     def __init__(self, *args):
