@@ -114,9 +114,30 @@ def compute_remainders(belief_base, formula, entails):
 
 # Selection function for remainder sets depeding on priority
 def select_remainders_by_priority(remainders, priorities):
-    # order the remainders by their total priority
-    remainders_sorted = sorted(remainders, key=lambda subset: total_priority(subset, priorities), reverse=True)
-    return remainders_sorted
+    """
+    Selects the remainders with the highest total priority.
+    Among those, chooses the ones that retain the largest number of formulas (i.e., minimal information loss).
+    """
+    if not remainders:
+        return []
+
+    # Compute the total priority for each remainder
+    scored = [(subset, total_priority(subset, priorities)) for subset in remainders]
+
+    # Find the highest priority score
+    max_priority = max(score for _, score in scored)
+
+    # Keep only the remainders with the highest priority
+    top_priority_subsets = [subset for subset, score in scored if score == max_priority]
+
+    # Among them, find the size of the largest subset
+    max_len = max(len(s) for s in top_priority_subsets)
+
+    # Return only those with the maximum number of formulas
+    best_remainders = [s for s in top_priority_subsets if len(s) == max_len]
+
+    return best_remainders
+
 
 # Partial meet contraction logic
 def partial_meet_contraction(belief_base, formula, priorities, entails):
