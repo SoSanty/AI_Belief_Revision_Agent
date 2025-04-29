@@ -1,49 +1,77 @@
-import pytest
-from belief_base import BeliefBase, Atom, And, Or, Not, Implies
-from partB import to_cnf, entails
+import unittest
+from partB import (
+    eliminate_biconditional_obj,
+    eliminate_implication_obj,
+    move_negation_inward_obj,
+    distribute_or_over_and_obj,
+    extract_clauses_obj,
+    to_cnf_obj,
+    check_entailment,
+)
+from belief_base import Atom, And, Or, Not, Implies, Biconditional, BeliefBase
 
-def check_entailment_from_belief_base(belief_base: BeliefBase, query: str) -> bool:
-    kb_formulas = [str(belief) for belief in belief_base.beliefs]
-    kb_clauses = []
-    for formula in kb_formulas:
-        kb_clauses.extend(to_cnf(formula))
-    return entails(kb_clauses, query)
+
+class TestPartB(unittest.TestCase):
+
+    def test_eliminate_biconditional(self):
+        A, B = Atom('A'), Atom('B')
+        formula = Biconditional(A, B)
+        result = eliminate_biconditional_obj(formula)
+        self.assertIsInstance(result, And)
+        self.assertTrue(all(isinstance(op, Implies) for op in result.operands))
+
+    def test_eliminate_implication(self):
+        A, B = Atom('A'), Atom('B')
+        formula = Implies(A, B)
+        result = eliminate_implication_obj(formula)
+        self.assertIsInstance(result, Or)
+        self.assertIsInstance(result.operands[0], Not)
+        self.assertEqual(str(result.operands[0].operand), 'A')
+        self.assertEqual(str(result.operands[1]), 'B')
+
+    def test_move_negation(self):
+        A, B = Atom('A'), Atom('B')
+        formula = Not(And(A, B))  # ¬(A ∧ B)
+        result = move_negation_inward_obj(formula)
+        self.assertIsInstance(result, Or)
+        self.assertTrue(all(isinstance(op, Not) for op in result.operands))
+
+    def test_distribute_or_over_and(self):
+        A, B, C = Atom('A'), Atom('B'), Atom('C')
+        formula = Or(A, And(B, C))  # A ∨ (B ∧ C)
+        result = distribute_or_over_and_obj(formula)
+        self.assertIsInstance(result, And)
+        self.assertTrue(all(isinstance(op, Or) for op in result.operands))
+
+    def test_extract_clauses(self):
+        A, B = Atom('A'), Atom('B')
+        formula = And(Or(A, Not(B)), A)
+        clauses = extract_clauses_obj(formula)
+        self.assertEqual(len(clauses), 2)
+        self.assertIn('A', clauses[1])
+        self.assertIn('~B', clauses[0])
+
+    def test_to_cnf(self):
+        A, B = Atom('A'), Atom('B')
+        formula = Implies(A, B)
+        cnf = to_cnf_obj(formula)
+        self.assertEqual(cnf, [{ '~A', 'B' }])
+
+    def test_check_entailment_true(self):
+        A, B = Atom('A'), Atom('B')
+        base = BeliefBase()
+        base.expand(Implies(A, B))
+        base.expand(A)
+        self.assertTrue(check_entailment(base, B))
+
+    def test_check_entailment_false(self):
+        A, B = Atom('A'), Atom('B')
+        base = BeliefBase()
+        base.expand(Implies(A, B))
+        self.assertFalse(check_entailment(base, B))
 
 
-def test_super_complex_entailment():
-    bb = BeliefBase()
+if __name__ == '__main__':
+    unittest.main()
 
-    # Base molto complessa, logica articolata e interdipendente
-    bb.expand(Implies(And(Atom("P"), Atom("Q")), Atom("R")))             # (P ∧ Q) → R
-    bb.expand(Implies(Atom("R"), Or(Atom("S"), Atom("T"))))              # R → (S ∨ T)
-    bb.expand(Implies(And(Atom("S"), Not(Atom("U"))), Atom("V")))        # (S ∧ ¬U) → V
-    bb.expand(Implies(Atom("T"), Atom("U")))                             # T → U
-    bb.expand(Implies(Atom("V"), Atom("W")))                             # V → W
-    bb.expand(Atom("P"))
-    bb.expand(Atom("Q"))
 
-    # Con queste premesse, possiamo arrivare fino a W.
-    # Catena: P ∧ Q → R → (S ∨ T)
-    # Se S è vero e U è falso, V è vero → W
-    # Ma se T è vero → U è vero → ¬U è falso → V è falso → W no
-    # Se S è vero, U è falso → V vero → W vero ✅
-
-    # Quindi: possiamo derivare W, solo se la disgiunzione R → (S ∨ T) va su S, e U è falsa implicitamente
-    # Non possiamo dire W è garantito, a meno che non sia esplicitato che U è falsa
-    # Ma nel nostro KB non si esclude U, quindi non possiamo garantire V né W
-    # Ma possiamo garantire **R** e **S ∨ T** e **U** (da T)
-
-    # Test di entailment su W (che non può essere garantito senza info su U)
-    assert not check_entailment_from_belief_base(bb, "W")  # Non garantito
-
-    # Test su R
-    assert check_entailment_from_belief_base(bb, "R")
-
-    # Test su S ∨ T (è implicato da R)
-    assert check_entailment_from_belief_base(bb, "S | T")
-
-    # Se aggiungiamo ¬U e S, allora possiamo derivare W!
-    bb.expand(Atom("S"))
-    bb.expand(Not(Atom("U")))
-
-    assert check_entailment_from_belief_base(bb, "W")

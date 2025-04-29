@@ -175,3 +175,22 @@ class Implies:
         elif isinstance(self.consequent, (And, Or, Not, Implies)):
             atoms.update(self.consequent.get_atoms())
         return atoms
+    
+
+
+class Biconditional:
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+
+    def __str__(self):
+        return f"({self.left} ↔ {self.right})"
+
+    def __repr__(self):
+        return f"Biconditional({repr(self.left)}, {repr(self.right)})"
+
+    def evaluate(self, model):
+        return self.left.evaluate(model) == self.right.evaluate(model)
+
+    def get_atoms(self):
+        return self.left.get_atoms().union(self.right.get_atoms())
