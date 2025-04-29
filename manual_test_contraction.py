@@ -25,8 +25,9 @@ bb.expand(r, 1)               # Belief: R with priority 1 (least important)
 
 # --- Step 2: Specify the formula to contract ---
 
-phi = r  # We want to remove R (i.e., ensure R is no longer entailed)
-
+#phi = q  # We want to remove R (i.e., ensure R is no longer entailed)
+#phi = r
+phi = p
 # --- Step 3: Apply partial meet contraction ---
 
 # This will remove the minimal amount of lower-priority beliefs needed

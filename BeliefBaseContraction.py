@@ -25,27 +25,61 @@ def is_maximal_non_entailing(subset, full_base, formula):
     I.e., you cannot add more beliefs from 'full_base' without causing entailment of 'formula'.
     """
     # If the current subset entails the formula, it's not valid
-    if entails([b.formula for b in subset], formula):
+    if entails(subset, formula):
         return False
     # Check that no strictly larger subset (of full_base) also avoids entailment
     for other in powerset(full_base):
         other = set(other)
-        if set(subset) < other and not entails([b.formula for b in other], formula):
+        if set(subset) < other and not entails(other, formula):
             return False
     return True
 
 # Compute all remainders of the belief base w.r.t. the formula
+#def compute_remainders(belief_base, formula):
+#    """
+#    Computes all 'remainders' of the belief base after contracting by 'formula'.
+#    A remainder is a maximal subset that does not entail 'formula'.
+#    """
+#    remainders = []
+#    for subset in powerset(belief_base.beliefs):
+#        subset = set(subset)
+#        if is_maximal_non_entailing(subset, belief_base.beliefs, formula):
+#            remainders.append(subset)
+#    return remainders
+
 def compute_remainders(belief_base, formula):
     """
     Computes all 'remainders' of the belief base after contracting by 'formula'.
     A remainder is a maximal subset that does not entail 'formula'.
     """
     remainders = []
-    for subset in powerset(belief_base.beliefs):
+    beliefs = list(belief_base.beliefs)
+    print("\n--- Computing Remainders ---")
+    print(f"Formula to contract (¬entail): {formula}")
+    print(f"Beliefs in base: {[b.formula for b in beliefs]}")
+
+    for subset in powerset(beliefs):
         subset = set(subset)
-        if is_maximal_non_entailing(subset, belief_base.beliefs, formula):
+
+        try:
+            result = entails(subset, formula)
+        except Exception as e:
+            print(f"Error in entailment check: {e}")
+            continue
+
+        print(f"Testing subset: {[str(b.formula) for b in subset]}")
+        print(f" -> Entails {formula}? {result}")
+
+        if is_maximal_non_entailing(subset, beliefs, formula):
+            print(" --> ✅ Valid remainder (maximal & non-entailing)\n")
             remainders.append(subset)
+        else:
+            print(" --> ❌ Rejected (not maximal or entails formula)\n")
+
+    print(f"\nTotal valid remainders found: {len(remainders)}\n")
+    
     return remainders
+
 
 # Select best remainders using priorities and minimal information loss
 def select_remainders_by_priority(remainders):
@@ -92,12 +126,12 @@ def partial_meet_contraction(belief_base, formula):
     return contracted
 
 # Check logical entailment of a formula from a list of formulas
-def entails(formulas, formula_str):
+def entails(beliefs, formula):
     """
-    Returns True if the given list of formulas logically entails 'formula_str'.
-    Uses an auxiliary belief base and a separate entailment checker.
+    beliefs: a set of Belief objects
+    formula: a Formula object
     """
     bb = BeliefBase()
-    for f in formulas:
-        bb.expand(f)
-    return check_entailment(bb, formula_str)
+    for belief in beliefs:
+        bb.expand(belief.formula, belief.priority)
+    return check_entailment(bb, formula)
