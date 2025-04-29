@@ -18,10 +18,10 @@ q_implies_r = Implies(q, r)  # Q → R
 bb = BeliefBase()
 
 # Add beliefs to the base along with their associated priorities (higher = more important)
-bb.expand(p, 4)               # Belief: P with priority 4
-bb.expand(p_implies_q, 3)     # Belief: P → Q with priority 3
-bb.expand(q_implies_r, 2)     # Belief: Q → R with priority 2
-bb.expand(r, 1)               # Belief: R with priority 1 (least important)
+bb.expand(p)               # Belief: P with priority 4
+bb.expand(p_implies_q)     # Belief: P → Q with priority 3
+bb.expand(q_implies_r)     # Belief: Q → R with priority 2
+bb.expand(r)               # Belief: R with priority 1 (least important)
 
 # --- Step 2: Specify the formula to contract ---
 

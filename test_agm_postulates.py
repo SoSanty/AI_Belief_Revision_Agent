@@ -82,10 +82,13 @@ class TestContractionPostulates(unittest.TestCase):
         phi = And(A, B)
         psi = And(B, A)
         new_base = BeliefBase()
-        new_base.expand(A, priority=5)
-        new_base.expand(B, priority=5)
+        new_base.expand(A)
+        new_base.expand(B)
+        print("Beliefs before contraction:", [belief.formula for belief in new_base.beliefs])
         contracted_phi = partial_meet_contraction(new_base, phi)
         contracted_psi = partial_meet_contraction(new_base, psi)
+        print("Beliefs after contracting phi:", [belief.formula for belief in contracted_phi])
+        print("Beliefs after contracting psi:", [belief.formula for belief in contracted_psi])
         self.assertEqual(set(contracted_phi), set(contracted_psi),
                          "Extensionality postulate failed: Contracting equivalent formulas gave different results.")
 

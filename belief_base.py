@@ -32,6 +32,7 @@ class BeliefBase:
         if not self.is_consistent():
             print(f"Warning: By adding {formula} you've made the belief base inconsistent.")
 
+        self.belief_counter += 1
     def __str__(self):
         status = "Consistent" if self.is_consistent() else "Inconsistent"
         beliefs_str = " , ".join(str(belief) for belief in self.beliefs)
