@@ -25,12 +25,12 @@ def is_maximal_non_entailing(subset, full_base, formula):
     I.e., you cannot add more beliefs from 'full_base' without causing entailment of 'formula'.
     """
     # If the current subset entails the formula, it's not valid
-    if entails(subset, formula):
+    if entails_cont(subset, formula):
         return False
     # Check that no strictly larger subset (of full_base) also avoids entailment
     for other in powerset(full_base):
         other = set(other)
-        if set(subset) < other and not entails(other, formula):
+        if set(subset) < other and not entails_cont(other, formula):
             return False
     return True
 
@@ -62,7 +62,7 @@ def compute_remainders(belief_base, formula):
         subset = set(subset)
 
         try:
-            result = entails(subset, formula)
+            result = entails_cont(subset, formula)
         except Exception as e:
             print(f"Error in entailment check: {e}")
             continue
@@ -126,7 +126,7 @@ def partial_meet_contraction(belief_base, formula):
     return contracted
 
 # Check logical entailment of a formula from a list of formulas
-def entails(beliefs, formula):
+def entails_cont(beliefs, formula):
     """
     beliefs: a set of Belief objects
     formula: a Formula object
