@@ -415,3 +415,12 @@ def check_entailment(belief_base: BeliefBase, query: str) -> bool:
     result = entails(kb_clauses, query)
     
     return result
+
+def logically_equivalent(belief_base: BeliefBase, phi, psi) -> bool:
+    """
+    Check if two formulas φ and ψ are logically equivalent in the context of a belief base.
+    They are equivalent if φ entails ψ and ψ entails φ.
+    """
+    entails_phi_psi = check_entailment(belief_base, f"({phi}) implies ({psi})")
+    entails_psi_phi = check_entailment(belief_base, f"({psi}) implies ({phi})")
+    return entails_phi_psi and entails_psi_phi

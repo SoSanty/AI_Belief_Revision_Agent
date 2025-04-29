@@ -86,6 +86,7 @@ def select_remainders_by_priority(remainders):
     """
     Selects among the remainders those with the highest total priority.
     Among those, keeps only the ones with the largest number of beliefs (minimal information loss).
+    If there are ties, deterministically sort by formula names for Extensionality.
     """
     if not remainders:
         return []
@@ -102,6 +103,12 @@ def select_remainders_by_priority(remainders):
     # Among them, keep the largest ones (by belief count)
     max_len = max(len(s) for s in top_priority_subsets)
     best_remainders = [s for s in top_priority_subsets if len(s) == max_len]
+
+    # Deterministically sort best remainders to ensure consistent behavior
+    best_remainders = sorted(
+        best_remainders,
+        key=lambda subset: sorted(str(belief.formula) for belief in subset)
+    )
     
     return best_remainders
 
@@ -111,6 +118,7 @@ def partial_meet_contraction(belief_base, formula):
     Performs partial meet contraction of the belief base with respect to 'formula'.
     It removes just enough beliefs to ensure 'formula' is no longer entailed,
     keeping as much high-priority information as possible.
+    The 'formula' should be a symbolic Formula object, not a string.
     """
     remainders = compute_remainders(belief_base, formula)
     
@@ -122,7 +130,14 @@ def partial_meet_contraction(belief_base, formula):
     
     # The contraction result is the intersection of the selected remainders
     contracted = set.intersection(*map(set, selected))
-    
+
+    # Check consistency
+    new_belief_base = BeliefBase()
+    for belief in contracted:
+        new_belief_base.expand(belief.formula, belief.priority)
+    if not new_belief_base.is_consistent():
+        print("⚠️ Warning: contraction resulted in an inconsistent belief base!")
+
     return contracted
 
 # Check logical entailment of a formula from a list of formulas

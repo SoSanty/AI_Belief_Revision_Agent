@@ -6,8 +6,7 @@ class Belief:
         self.priority = priority
 
     def __str__(self):
-        return f"{self.formula} [p={self.priority}]"
-
+        return f"{self.formula} [priority={self.priority:.2f}]"
     def __repr__(self):
         return f"Belief({repr(self.formula)}, priority={self.priority})"
 
@@ -20,9 +19,16 @@ class Belief:
 class BeliefBase:
     def __init__(self):
         self.beliefs = []
+        self.belief_counter = 0
 
     def expand(self, formula, priority=0):
+        if priority == 0:
+            seniority_score = self.belief_counter
+            simplicity_score = 1 / (len(str(formula)) + 1)  # Shorter formulas get more points
+            priority = (5 * seniority_score) + (3 * simplicity_score)
+    
         self.beliefs.append(Belief(formula, priority))
+
         if not self.is_consistent():
             print(f"Warning: By adding {formula} you've made the belief base inconsistent.")
 
