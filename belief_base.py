@@ -6,8 +6,7 @@ class Belief:
         self.priority = priority
 
     def __str__(self):
-        return f"{self.formula} [p={self.priority}]"
-
+        return f"{self.formula} [priority={self.priority:.2f}]"
     def __repr__(self):
         return f"Belief({repr(self.formula)}, priority={self.priority})"
 
@@ -20,12 +19,20 @@ class Belief:
 class BeliefBase:
     def __init__(self):
         self.beliefs = []
+        self.belief_counter = 0
 
     def expand(self, formula, priority=0):
+        if priority == 0:
+            seniority_score = self.belief_counter
+            simplicity_score = 1 / (len(str(formula)) + 1)  # Shorter formulas get more points
+            priority = (5 * seniority_score) + (3 * simplicity_score)
+    
         self.beliefs.append(Belief(formula, priority))
+
         if not self.is_consistent():
             print(f"Warning: By adding {formula} you've made the belief base inconsistent.")
 
+        self.belief_counter += 1
     def __str__(self):
         status = "Consistent" if self.is_consistent() else "Inconsistent"
         beliefs_str = " , ".join(str(belief) for belief in self.beliefs)
@@ -169,3 +176,22 @@ class Implies:
         elif isinstance(self.consequent, (And, Or, Not, Implies)):
             atoms.update(self.consequent.get_atoms())
         return atoms
+    
+
+
+class Biconditional:
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+
+    def __str__(self):
+        return f"({self.left} ↔ {self.right})"
+
+    def __repr__(self):
+        return f"Biconditional({repr(self.left)}, {repr(self.right)})"
+
+    def evaluate(self, model):
+        return self.left.evaluate(model) == self.right.evaluate(model)
+
+    def get_atoms(self):
+        return self.left.get_atoms().union(self.right.get_atoms())
