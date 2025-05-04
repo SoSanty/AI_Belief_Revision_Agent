@@ -75,7 +75,6 @@ def main():
         choice = input("Choose an action (1-4): ").strip()
 
         if choice == "1":
-            print("\nCurrent Belief Base:")
             print(belief_base)
 
         elif choice == "2":

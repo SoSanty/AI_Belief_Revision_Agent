@@ -1,17 +1,14 @@
-
-
-
 # Belief Revision Agent — Interactive and Automated Testing
 
 This belief revision system implements the AGM framework for propositional logic. It supports expansion, contraction, and revision, and checks for rationality using both symbolic CNF-based entailment and a model-based consistency checker.
 
 ---
 
-## ✅ How to Test the Agent
+## How to Test the Agent
 
 You can test the system in two different ways:
 
-### 1. 🔁 Interactive Mode (Command Line)
+### 1.Interactive Mode (Command Line)
 Run the agent in an interactive loop:
 
 ```bash
@@ -35,7 +32,7 @@ You can input complex formulas like:
 
 Biimplication (`<->`) and implication (`->`) are also supported.
 
-### 🔍 Example Scenario to Test All AGM Postulates
+### Example Scenario to Test All AGM Postulates
 
 This sequence of inputs can be used to manually verify all expansion and contraction postulates:
 
@@ -54,7 +51,7 @@ This sequence of inputs can be used to manually verify all expansion and contrac
 
 ---
 
-### 2. 🧪 Unit Test Mode
+### 2.Unit Test Mode
 
 For a non-interactive, automated test of all AGM postulates and core logic, run:
 
@@ -68,14 +65,10 @@ This runs a suite of tests that validate:
 - Expansion and contraction logic
 - Satisfaction of all AGM postulates
 
-This method is ideal for grading or continuous integration.
-
 ---
 
-## 💡 Notes
+## Notes
 
 - The belief base uses symbolic formula objects (e.g., `Atom`, `And`, `Not`) to ensure clean logical manipulation.
 - The CNF conversion and resolution engine is custom built and purely symbolic.
 - Priorities are automatically assigned based on seniority and formula simplicity, and they influence contraction behavior.
-
-Enjoy testing your agent!
