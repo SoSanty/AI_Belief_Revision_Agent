@@ -3,7 +3,7 @@ from contraction import partial_meet_contraction
 
 import re
 def parse_input_formula(raw):
-    # Tokenize the formula
+    # Tokenized the formula
     tokens = re.findall(r'\w+|<->|->|AND|OR|NOT|\(|\)', raw)
     tokens = [t.upper() if t.lower() in {"and", "or", "not"} else t for t in tokens]
     pos = 0

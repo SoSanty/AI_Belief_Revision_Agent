@@ -23,9 +23,10 @@ class BeliefBase:
 
     def expand(self, formula, priority=0):
         if priority == 0:
-            seniority_score = self.belief_counter
+            # More recent formulas (added later) get higher priority
+            recency_score = self.belief_counter
             simplicity_score = 1 / (len(str(formula)) + 1)  # Shorter formulas get more points
-            priority = (5 * seniority_score) + (3 * simplicity_score)
+            priority = (5 * recency_score) + (3 * simplicity_score)
     
         self.beliefs.append(Belief(formula, priority))
 

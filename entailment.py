@@ -39,7 +39,6 @@ def eliminate_implication_obj(formula):
         consequent = eliminate_implication_obj(formula.consequent)
         return Or(Not(antecedent), consequent)
     elif isinstance(formula, Biconditional):
-        # Passa il bicondizionale a eliminate_biconditional_obj per espanderlo prima
         simplified = eliminate_biconditional_obj(formula)
         return eliminate_implication_obj(simplified)
     else:
@@ -64,7 +63,6 @@ def move_negation_inward_obj(formula):
             # ¬(A ∨ B) ⇒ ¬A ∧ ¬B
             return And(*[move_negation_inward_obj(Not(op)) for op in inner.operands])
         else:
-            # Qualsiasi altro operatore (es. Implies/Biconditional) dovrebbe già essere eliminato prima
             raise TypeError(f"Negation must be pushed after eliminating implications: {type(inner)}")
     elif isinstance(formula, And):
         return And(*[move_negation_inward_obj(op) for op in formula.operands])
@@ -158,10 +156,8 @@ def check_entailment(belief_base: BeliefBase, query) -> bool:
     negated_query = Not(query)
     query_clauses = to_cnf_obj(negated_query)
 
-    # Trasforma ogni clausola in frozenset per la risoluzione
     clause_set = {frozenset(clause) for clause in kb_clauses + query_clauses}
 
-    # Esegui risoluzione
     return resolution(clause_set)
 
 
@@ -169,17 +165,14 @@ def resolution(clauses: Set[FrozenSet[str]]) -> bool:
     new = set()
 
     while True:
-        # Genera tutte le coppie di clausole
         pairs = [(c1, c2) for c1 in clauses for c2 in clauses if c1 != c2]
 
         for (c1, c2) in pairs:
             resolvents = resolve(set(c1), set(c2))
             if frozenset() in resolvents:
-                # Clausola vuota: contraddizione
                 return True
             new.update(resolvents)
 
-        # Nessuna nuova clausola => non c'è contraddizione
         if new.issubset(clauses):
             return False
 
@@ -196,7 +189,6 @@ def resolve(clause1: Set[str], clause2: Set[str]) -> Set[FrozenSet[str]]:
         for l2 in clause2:
             if l1 == negate(l2):
                 new_clause = (clause1 | clause2) - {l1, l2}
-                # Evita clausole tautologiche tipo: A ∨ ¬A
                 if not any(lit in new_clause and negate(lit) in new_clause for lit in new_clause):
                     resolvents.add(frozenset(new_clause))
 

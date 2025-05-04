@@ -34,19 +34,6 @@ def is_maximal_non_entailing(subset, full_base, formula):
             return False
     return True
 
-# Compute all remainders of the belief base w.r.t. the formula
-#def compute_remainders(belief_base, formula):
-#    """
-#    Computes all 'remainders' of the belief base after contracting by 'formula'.
-#    A remainder is a maximal subset that does not entail 'formula'.
-#    """
-#    remainders = []
-#    for subset in powerset(belief_base.beliefs):
-#        subset = set(subset)
-#        if is_maximal_non_entailing(subset, belief_base.beliefs, formula):
-#            remainders.append(subset)
-#    return remainders
-
 def compute_remainders(belief_base, formula):
     """
     Computes all 'remainders' of the belief base after contracting by 'formula'.
@@ -71,10 +58,10 @@ def compute_remainders(belief_base, formula):
         print(f" -> Entails {formula}? {result}")
 
         if is_maximal_non_entailing(subset, beliefs, formula):
-            print(" --> ✅ Valid remainder (maximal & non-entailing)\n")
+            print(" --> Valid remainder (maximal & non-entailing)\n")
             remainders.append(subset)
         else:
-            print(" --> ❌ Rejected (not maximal or entails formula)\n")
+            print(" --> Rejected (not maximal or entails formula)\n")
 
     print(f"\nTotal valid remainders found: {len(remainders)}\n")
     
