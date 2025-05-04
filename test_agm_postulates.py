@@ -1,7 +1,7 @@
 import unittest
 from belief_base import BeliefBase, Atom, And, Not, Implies
-from BeliefBaseContraction import partial_meet_contraction
-from partB import check_entailment, logically_equivalent
+from contraction import partial_meet_contraction
+from entailment import check_entailment, logically_equivalent
 
 
 class TestExpansionPostulates(unittest.TestCase):

@@ -1,180 +1,152 @@
 from itertools import chain, combinations
+from belief_base import *
+from entailment import * 
 
-
-"""
-Key Components of the Code:
-
-    Entailment Function (entails):
-
-        This function checks if a given belief base logically entails a formula. In the provided code,
-        it's a dummy function that just checks if the formula is directly present in the belief base.
-        In a full implementation, you would replace this with an actual logical entailment check,
-        such as using resolution or checking satisfiability via CNF (Conjunctive Normal Form).
-
-    Powerset Generation (powerset):
-
-        The function powerset(s) generates all subsets of a set s. This is important because, in a meet contraction,
-        you need to consider all possible subsets of the belief base to find which ones entail the formula (phi) or not.
-
-    Maximal Non-Entailing Subset Check (is_maximal_non_entailing):
-
-        This function checks whether a given subset is a "maximal" non-entailing subset. A subset is considered maximal if:
-
-            It does not entail the formula phi.
-
-            No superset of this subset (in the powerset of the full belief base) is a valid non-entailing subset.
-
-        This function is key in identifying which subsets are still consistent with the belief base after removing the formula phi.
-
-    Compute Remainders (compute_remainders):
-
-        This function iterates over all subsets of the belief base and collects all subsets that are maximal non-entailing
-        (i.e., subsets that don't imply the formula phi). These subsets represent the possible "remainders" after removing the formula.
-
-    Selection Function (select_remainders):
-
-        This function simply returns all the maximal non-entailing subsets (or "remainders").
-        The code mentions that you could customize this function with a ranking method,
-        which could allow for a more selective contraction strategy (e.g., picking subsets based on priority).
-
-    Partial Meet Contraction (partial_meet_contraction):
-
-        This is the main logic that computes the contraction:
-
-            It first finds all the maximal non-entailing remainders using compute_remainders.
-
-            If no remainders are found, it returns the original belief base (this is a safeguard in case the contraction isn't possible).
-
-            If remainders are found, it selects them (this is done using the select_remainders function) and
-            then calculates the intersection of all selected remainders. The intersection of the remainders represents
-            the contracted belief base, as it contains only the beliefs that are consistent with the formula removal.
-
-How it Works:
-
-    Input:
-
-        The user provides a set of beliefs (the belief base) and the formula phi they wish to contract.
-
-    Process:
-
-        The program computes all subsets of the belief base.
-
-        For each subset, it checks whether it entails the formula phi.
-
-        The subsets that do not entail phi are considered as candidates.
-
-        Among these, the maximal subsets are chosen — meaning, those that can't be extended further without beginning to entail phi.
-
-    Output:
-
-        The program then calculates the intersection of all maximal non-entailing subsets, which represents the contracted belief base.
-        This contraction removes the formula phi while preserving as much of the belief base as possible.
-"""
-
-
-
-# Dummy entailment function to be replaced with your real one
-def entails(belief_base, formula):
-    """
-    Check if belief_base logically entails formula.
-    Replace with resolution/CNF method from your teammates.
-    """
-    # Example dummy logic: check if formula is in the base
-    return formula in belief_base
-
-# Generate all subsets of a set
+# Generate the powerset of a set
 def powerset(s):
-    """Returns all subsets of a set s."""
+    """
+    Returns all possible subsets (the power set) of the given set 's'.
+    Useful for computing all candidate belief subsets.
+    """
     return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
 
-# Function to calculate the total priority of a subset
-def total_priority(subset, priorities):
-    """It calculate the total sum of priority of a subset."""
-    return sum(priorities.get(formula, 0) for formula in subset)
+# Calculate the total priority of a subset of beliefs
+def total_priority(subset):
+    """
+    Returns the total priority of a subset of beliefs.
+    Each belief has an associated priority, which is summed here.
+    """
+    return sum(belief.priority for belief in subset)
 
-# Check if a subset is a maximal non-entailing the belief to contract
-def is_maximal_non_entailing(subset, full_base, formula, entails):
-    subset = set(subset)
-    if entails(subset, formula):
+# Check if a belief subset is a *maximal* subset that does NOT entail the formula
+def is_maximal_non_entailing(subset, full_base, formula):
+    """
+    Determines whether 'subset' does NOT entail 'formula' and is maximal w.r.t. this property.
+    I.e., you cannot add more beliefs from 'full_base' without causing entailment of 'formula'.
+    """
+    # If the current subset entails the formula, it's not valid
+    if entails_cont(subset, formula):
         return False
+    # Check that no strictly larger subset (of full_base) also avoids entailment
     for other in powerset(full_base):
         other = set(other)
-        if subset < other and not entails(other, formula):
+        if set(subset) < other and not entails_cont(other, formula):
             return False
     return True
 
-# Find all remainder sets
-def compute_remainders(belief_base, formula, entails):
+# Compute all remainders of the belief base w.r.t. the formula
+#def compute_remainders(belief_base, formula):
+#    """
+#    Computes all 'remainders' of the belief base after contracting by 'formula'.
+#    A remainder is a maximal subset that does not entail 'formula'.
+#    """
+#    remainders = []
+#    for subset in powerset(belief_base.beliefs):
+#        subset = set(subset)
+#        if is_maximal_non_entailing(subset, belief_base.beliefs, formula):
+#            remainders.append(subset)
+#    return remainders
+
+def compute_remainders(belief_base, formula):
+    """
+    Computes all 'remainders' of the belief base after contracting by 'formula'.
+    A remainder is a maximal subset that does not entail 'formula'.
+    """
     remainders = []
-    for subset in powerset(belief_base):
+    beliefs = list(belief_base.beliefs)
+    print("\n--- Computing Remainders ---")
+    print(f"Formula to contract (¬entail): {formula}")
+    print(f"Beliefs in base: {[b.formula for b in beliefs]}")
+
+    for subset in powerset(beliefs):
         subset = set(subset)
-        if is_maximal_non_entailing(subset, belief_base, formula, entails):
+
+        try:
+            result = entails_cont(subset, formula)
+        except Exception as e:
+            print(f"Error in entailment check: {e}")
+            continue
+
+        print(f"Testing subset: {[str(b.formula) for b in subset]}")
+        print(f" -> Entails {formula}? {result}")
+
+        if is_maximal_non_entailing(subset, beliefs, formula):
+            print(" --> ✅ Valid remainder (maximal & non-entailing)\n")
             remainders.append(subset)
+        else:
+            print(" --> ❌ Rejected (not maximal or entails formula)\n")
+
+    print(f"\nTotal valid remainders found: {len(remainders)}\n")
+    
     return remainders
 
-# Selection function for remainder sets depeding on priority
-def select_remainders_by_priority(remainders, priorities):
+
+# Select best remainders using priorities and minimal information loss
+def select_remainders_by_priority(remainders):
     """
-    Selects the remainders with the highest total priority.
-    Among those, chooses the ones that retain the largest number of formulas (i.e., minimal information loss).
+    Selects among the remainders those with the highest total priority.
+    Among those, keeps only the ones with the largest number of beliefs (minimal information loss).
+    If there are ties, deterministically sort by formula names for Extensionality.
     """
     if not remainders:
         return []
 
-    # Compute the total priority for each remainder
-    scored = [(subset, total_priority(subset, priorities)) for subset in remainders]
-
-    # Find the highest priority score
+    # Pair each remainder with its total priority score
+    scored = [(subset, total_priority(subset)) for subset in remainders]
+    
+    # Get maximum priority score
     max_priority = max(score for _, score in scored)
-
-    # Keep only the remainders with the highest priority
+    
+    # Filter remainders that have this maximum score
     top_priority_subsets = [subset for subset, score in scored if score == max_priority]
 
-    # Among them, find the size of the largest subset
+    # Among them, keep the largest ones (by belief count)
     max_len = max(len(s) for s in top_priority_subsets)
-
-    # Return only those with the maximum number of formulas
     best_remainders = [s for s in top_priority_subsets if len(s) == max_len]
 
+    # Deterministically sort best remainders to ensure consistent behavior
+    best_remainders = sorted(
+        best_remainders,
+        key=lambda subset: sorted(str(belief.formula) for belief in subset)
+    )
+    
     return best_remainders
 
-
-# Partial meet contraction logic
-def partial_meet_contraction(belief_base, formula, priorities, entails):
-    remainders = compute_remainders(belief_base, formula, entails)
+# Main contraction function (partial meet contraction)
+def partial_meet_contraction(belief_base, formula):
+    """
+    Performs partial meet contraction of the belief base with respect to 'formula'.
+    It removes just enough beliefs to ensure 'formula' is no longer entailed,
+    keeping as much high-priority information as possible.
+    The 'formula' should be a symbolic Formula object, not a string.
+    """
+    remainders = compute_remainders(belief_base, formula)
+    
     if not remainders:
-        print("No valid remainder sets found. Returning original belief base.")
-        return belief_base
-    selected = select_remainders_by_priority(remainders,priorities)
+        print("No valid remainders found. Returning the original belief base.")
+        return belief_base.beliefs
+
+    selected = select_remainders_by_priority(remainders)
+    
+    # The contraction result is the intersection of the selected remainders
     contracted = set.intersection(*map(set, selected))
+
+    # Check consistency
+    new_belief_base = BeliefBase()
+    for belief in contracted:
+        new_belief_base.expand(belief.formula, belief.priority)
+    if not new_belief_base.is_consistent():
+        print("⚠️ Warning: contraction resulted in an inconsistent belief base!")
+
     return contracted
 
-# Entry point function to use the contraction tool
-def main():
-    print("=== Belief Base Contraction Tool ===")
-    
-    # Get belief base input
-    base_input = input("Enter belief base formulas separated by commas: ")
-    belief_base = set(map(str.strip, base_input.split(",")))
-
-    # Get formula to contract
-    formula = input("Enter the formula to contract (φ): ").strip()
-
-
-    priorities_input = input("Inserisci le priorità delle formule come dizionario (esempio: {'p': 3, 'q': 2}): ")
-    priorities = eval(priorities_input)
-
-
-    print("\nOriginal Belief Base:")
-    print(belief_base)
-    print("Formula to contract:", formula)
-
-    # Perform contraction
-    contracted = partial_meet_contraction(belief_base, formula, priorities, entails)
-
-    print("\nContracted Belief Base:")
-    print(contracted)
-
-# Run script
-if __name__ == "__main__":
-    main()
+# Check logical entailment of a formula from a list of formulas
+def entails_cont(beliefs, formula):
+    """
+    beliefs: a set of Belief objects
+    formula: a Formula object
+    """
+    bb = BeliefBase()
+    for belief in beliefs:
+        bb.expand(belief.formula, belief.priority)
+    return check_entailment(bb, formula)
