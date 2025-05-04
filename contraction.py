@@ -123,7 +123,7 @@ def partial_meet_contraction(belief_base, formula):
     for belief in contracted:
         new_belief_base.expand(belief.formula, belief.priority)
     if not new_belief_base.is_consistent():
-        print("⚠️ Warning: contraction resulted in an inconsistent belief base!")
+        print(" Warning: contraction resulted in an inconsistent belief base!")
 
     return contracted
 
