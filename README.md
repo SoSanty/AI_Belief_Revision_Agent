@@ -29,6 +29,7 @@ You can input complex formulas like:
 ```
 (NOT B) AND (B OR C) OR (A AND (NOT C)) AND D
 ```
+Make sure the parenthesis are correct in your input, otherwise there could be errors when expanding.
 
 Biimplication (`<->`) and implication (`->`) are also supported.
 
